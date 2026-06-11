@@ -20,6 +20,7 @@ export function useSimulation() {
     setCurrentTemperature,
     addTemperatureToHistory,
     clearHistory,
+    setTemperatureHistory,
   } = useSimulationStore();
 
   const engineRef = useRef<HeatDiffusionEngine | null>(null);
@@ -167,6 +168,33 @@ export function useSimulation() {
     });
   }, [temperatureHistory, setCurrentTemperature, setCurrentStep, setMode]);
 
+  const loadState = useCallback((history: number[][][], step: number) => {
+    if (history.length === 0) return;
+    isRunningRef.current = false;
+    setMode('paused');
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (!engineRef.current) {
+      engineRef.current = new HeatDiffusionEngine(
+        grid,
+        diffusionCoefficient,
+        boundaryConditions,
+        initialHeatSources,
+        timeStep
+      );
+    }
+    const safeStep = Math.max(0, Math.min(step, history.length - 1));
+    const targetTemp = history[safeStep];
+    engineRef.current.setTemperatureData(targetTemp);
+    Object.defineProperty(engineRef.current, 'currentStep', {
+      value: safeStep,
+      writable: true,
+    });
+    setTemperatureHistory(history, safeStep);
+  }, [grid, diffusionCoefficient, boundaryConditions, initialHeatSources, timeStep, setMode, setTemperatureHistory]);
+
   useEffect(() => {
     initEngine();
     return () => {
@@ -204,6 +232,7 @@ export function useSimulation() {
     reset,
     stepForward,
     goToStep,
+    loadState,
     initEngine,
     getEngine,
     isRunning: mode === 'running',

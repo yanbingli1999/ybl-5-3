@@ -18,6 +18,7 @@ export const ControlBar: React.FC = () => {
     currentHotZoneTracking,
     showHotZones,
     setShowHotZones,
+    temperatureHistory,
   } = useSimulationStore();
 
   const { play, pause, reset, stepForward, isRunning, isPaused, isFinished, isIdle } = useSimulation();
@@ -43,28 +44,38 @@ export const ControlBar: React.FC = () => {
   };
 
   const handleSaveExperiment = async () => {
+    const state = useSimulationStore.getState();
+    const history = state.temperatureHistory;
+    const step = state.currentStep;
     const config = {
       id: currentExperimentId || generateId(),
       name: `实验 ${new Date().toLocaleString('zh-CN')}`,
       createdAt: Date.now(),
-      grid: useSimulationStore.getState().grid,
-      materialId: useSimulationStore.getState().materialId,
-      boundaryConditions: useSimulationStore.getState().boundaryConditions,
-      initialHeatSources: useSimulationStore.getState().initialHeatSources,
-      totalSteps: useSimulationStore.getState().totalSteps,
-      timeStep: useSimulationStore.getState().timeStep,
+      grid: state.grid,
+      materialId: state.materialId,
+      boundaryConditions: state.boundaryConditions,
+      initialHeatSources: state.initialHeatSources,
+      totalSteps: state.totalSteps,
+      timeStep: state.timeStep,
+      runtimeState: {
+        temperatureHistory: history.map(frame => frame.map(row => [...row])),
+        currentStep: step,
+      },
     };
 
     try {
       if (!currentExperimentId) {
         await api.experiments.create(config);
-        useSimulationStore.getState().setCurrentExperimentId(config.id);
-        useSimulationStore.getState().setExperiments([
-          ...useSimulationStore.getState().experiments,
+        state.setCurrentExperimentId(config.id);
+        state.setExperiments([
+          ...state.experiments,
           config,
         ]);
       } else {
         await api.experiments.update(currentExperimentId, config);
+        state.setExperiments(
+          state.experiments.map(exp => (exp.id === currentExperimentId ? config : exp))
+        );
       }
     } catch (error) {
       console.error('保存实验失败:', error);

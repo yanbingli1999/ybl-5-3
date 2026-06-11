@@ -21,6 +21,7 @@ import type { HotZoneFrame, HotZoneTracking } from '@shared/types';
 export const HotZonePanel: React.FC = () => {
   const {
     grid,
+    currentStep,
     temperatureHistory,
     totalSteps,
     currentExperimentId,
@@ -43,15 +44,17 @@ export const HotZonePanel: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  const activeFrames = currentHotZoneTracking ? currentHotZoneTracking.frames : hotZoneFrames;
+
   const currentFrame = useMemo(() => {
-    if (!currentHotZoneTracking && hotZoneFrames.length === 0) return null;
-    if (currentHotZoneTracking) {
-      const step = useSimulationStore.getState().currentStep;
-      return currentHotZoneTracking.frames.find(f => f.step === step) || currentHotZoneTracking.frames[0] || null;
-    }
-    const step = useSimulationStore.getState().currentStep;
-    return hotZoneFrames.find(f => f.step === step) || hotZoneFrames[hotZoneFrames.length - 1] || null;
-  }, [currentHotZoneTracking, hotZoneFrames]);
+    if (activeFrames.length === 0) return null;
+    const matched = activeFrames.find(f => f.step === currentStep);
+    if (matched) return matched;
+    const closest = activeFrames.reduce((prev, curr) =>
+      Math.abs(curr.step - currentStep) < Math.abs(prev.step - currentStep) ? curr : prev
+    );
+    return closest;
+  }, [activeFrames, currentStep]);
 
   const runAnalysis = async () => {
     if (temperatureHistory.length === 0) return;
@@ -312,7 +315,7 @@ export const HotZonePanel: React.FC = () => {
           </div>
         )}
 
-        {temperatureHistory.length === 0 && (
+        {temperatureHistory.length === 0 && hotZoneTrackings.length === 0 && !currentHotZoneTracking && (
           <div className="text-center py-6 text-slate-500 text-sm">
             <Target className="w-10 h-10 mx-auto mb-2 opacity-30" />
             <p>先运行模拟，生成时间轴数据</p>

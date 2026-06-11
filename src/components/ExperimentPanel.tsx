@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Star, Trash2, Download, Clock } from 'lucide-react';
 import useSimulationStore from '../store/useSimulationStore';
+import useSimulation from '../hooks/useSimulation';
 import api from '../services/api';
 import type { ExperimentConfig, ExperimentResult } from '@shared/types';
 
@@ -16,19 +17,34 @@ export const ExperimentPanel: React.FC = () => {
     setInitialHeatSources,
     setTotalSteps,
     setCurrentExperimentId,
-    reset,
+    clearHotZoneFrames,
+    setCurrentHotZoneTracking,
+    setMode,
   } = useSimulationStore();
+
+  const { loadState, initEngine } = useSimulation();
 
   const [activeTab, setActiveTab] = useState<'experiments' | 'favorites'>('experiments');
 
   const loadExperiment = (config: ExperimentConfig) => {
-    reset();
-    setGrid(config.grid);
-    setBoundaryConditions(config.boundaryConditions);
+    const hasRuntime = !!config.runtimeState?.temperatureHistory?.length;
+    clearHotZoneFrames();
+    setCurrentHotZoneTracking(null);
+    setCurrentExperimentId(config.id);
     setMaterialId(config.materialId);
     setInitialHeatSources(config.initialHeatSources);
     setTotalSteps(config.totalSteps);
-    setCurrentExperimentId(config.id);
+    setBoundaryConditions(config.boundaryConditions);
+    setGrid(config.grid);
+    if (!hasRuntime) {
+      setMode('idle');
+      setTimeout(() => initEngine(), 0);
+      return;
+    }
+    loadState(
+      config.runtimeState!.temperatureHistory,
+      config.runtimeState!.currentStep
+    );
   };
 
   const deleteExperiment = async (id: string, e: React.MouseEvent) => {

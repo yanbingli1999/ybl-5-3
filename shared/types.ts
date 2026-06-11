@@ -36,6 +36,10 @@ export interface ExperimentConfig {
   initialHeatSources: HeatSource[];
   totalSteps: number;
   timeStep: number;
+  runtimeState?: {
+    temperatureHistory: number[][][];
+    currentStep: number;
+  };
 }
 
 export interface TemperatureSnapshot {

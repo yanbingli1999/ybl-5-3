@@ -52,6 +52,7 @@ interface SimulationState {
   setCurrentTemperature: (temp: number[][]) => void;
   addTemperatureToHistory: (temp: number[][]) => void;
   clearHistory: () => void;
+  setTemperatureHistory: (history: number[][][], currentStep: number) => void;
   
   setGrid: (grid: GridConfig) => void;
   setBoundaryConditions: (bc: BoundaryConditions) => void;
@@ -158,6 +159,15 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       temperatureHistory: [...state.temperatureHistory, temp],
     })),
   clearHistory: () => set({ temperatureHistory: [], currentStep: 0 }),
+  setTemperatureHistory: (history, step) => {
+    const currentTemp = history[step] ?? history[history.length - 1] ?? null;
+    const patch: Partial<SimulationState> = {
+      temperatureHistory: history,
+      currentStep: step,
+    };
+    if (currentTemp) patch.currentTemperature = currentTemp;
+    set(patch as SimulationState);
+  },
   
   setGrid: (grid) =>
     set({

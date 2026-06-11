@@ -16,6 +16,8 @@ export default function Home() {
     setFavorites,
     setSnapshots,
     setHotZoneTrackings,
+    setCurrentHotZoneTracking,
+    setHotZoneThreshold,
     currentExperimentId,
   } = useSimulationStore();
 
@@ -53,6 +55,11 @@ export default function Home() {
         try {
           const trackings = await api.hotZoneTrackings.getByExperiment(currentExperimentId);
           setHotZoneTrackings(trackings);
+          if (trackings.length > 0) {
+            const latest = trackings[0];
+            setCurrentHotZoneTracking(latest);
+            setHotZoneThreshold(latest.threshold);
+          }
         } catch (error) {
           console.error('加载热区追踪失败:', error);
         }
@@ -60,7 +67,7 @@ export default function Home() {
       loadSnapshots();
       loadHotZoneTrackings();
     }
-  }, [currentExperimentId, setSnapshots, setHotZoneTrackings]);
+  }, [currentExperimentId, setSnapshots, setHotZoneTrackings, setCurrentHotZoneTracking, setHotZoneThreshold]);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-950 overflow-hidden">
