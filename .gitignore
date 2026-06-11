@@ -23,6 +23,7 @@ out
 api/data/experiments/
 api/data/favorites/
 api/data/snapshots/
+api/data/hotzone_trackings/
 
 # Caches
 .cache/

@@ -56,3 +56,38 @@ export interface ExperimentResult {
 }
 
 export type SimulationMode = 'idle' | 'running' | 'paused' | 'finished';
+
+export interface HotZone {
+  id: string;
+  area: number;
+  centerX: number;
+  centerY: number;
+  maxTemperature: number;
+  avgTemperature: number;
+  cells: { x: number; y: number }[];
+}
+
+export interface HotZoneFrame {
+  step: number;
+  timestamp: number;
+  hotZones: HotZone[];
+  hotZoneCount: number;
+  totalArea: number;
+}
+
+export interface HotZoneTracking {
+  id: string;
+  experimentId: string;
+  threshold: number;
+  createdAt: number;
+  frames: HotZoneFrame[];
+  trackedZones: {
+    trackId: string;
+    firstStep: number;
+    lastStep: number;
+    duration: number;
+    maxArea: number;
+    avgArea: number;
+    maxTemperature: number;
+  }[];
+}

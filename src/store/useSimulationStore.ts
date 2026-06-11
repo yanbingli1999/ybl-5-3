@@ -8,6 +8,8 @@ import type {
   TemperatureSnapshot,
   ExperimentResult,
   SimulationMode,
+  HotZoneFrame,
+  HotZoneTracking,
 } from '@shared/types';
 
 interface SimulationState {
@@ -34,7 +36,14 @@ interface SimulationState {
   snapshots: TemperatureSnapshot[];
   experiments: ExperimentConfig[];
   favorites: ExperimentResult[];
-  
+
+  hotZoneThreshold: number;
+  hotZoneFrames: HotZoneFrame[];
+  hotZoneTrackings: HotZoneTracking[];
+  currentHotZoneTracking: HotZoneTracking | null;
+  showHotZones: boolean;
+  showHotZonePanel: boolean;
+
   currentExperimentId: string | null;
   hoveredCell: { x: number; y: number } | null;
   
@@ -66,9 +75,21 @@ interface SimulationState {
   removeSnapshot: (id: string) => void;
   setExperiments: (experiments: ExperimentConfig[]) => void;
   setFavorites: (favorites: ExperimentResult[]) => void;
+
+  setHotZoneThreshold: (threshold: number) => void;
+  setHotZoneFrames: (frames: HotZoneFrame[]) => void;
+  addHotZoneFrame: (frame: HotZoneFrame) => void;
+  clearHotZoneFrames: () => void;
+  setHotZoneTrackings: (trackings: HotZoneTracking[]) => void;
+  addHotZoneTracking: (tracking: HotZoneTracking) => void;
+  removeHotZoneTracking: (id: string) => void;
+  setCurrentHotZoneTracking: (tracking: HotZoneTracking | null) => void;
+  setShowHotZones: (show: boolean) => void;
+  setShowHotZonePanel: (show: boolean) => void;
+
   setCurrentExperimentId: (id: string | null) => void;
   setHoveredCell: (cell: { x: number; y: number } | null) => void;
-  
+
   reset: () => void;
 }
 
@@ -118,7 +139,14 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   snapshots: [],
   experiments: [],
   favorites: [],
-  
+
+  hotZoneThreshold: 60,
+  hotZoneFrames: [],
+  hotZoneTrackings: [],
+  currentHotZoneTracking: null,
+  showHotZones: true,
+  showHotZonePanel: false,
+
   currentExperimentId: null,
   hoveredCell: null,
   
@@ -179,6 +207,27 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     })),
   setExperiments: (experiments) => set({ experiments }),
   setFavorites: (favorites) => set({ favorites }),
+
+  setHotZoneThreshold: (threshold) => set({ hotZoneThreshold: threshold }),
+  setHotZoneFrames: (frames) => set({ hotZoneFrames: frames }),
+  addHotZoneFrame: (frame) =>
+    set((state) => ({
+      hotZoneFrames: [...state.hotZoneFrames, frame],
+    })),
+  clearHotZoneFrames: () => set({ hotZoneFrames: [], currentHotZoneTracking: null }),
+  setHotZoneTrackings: (trackings) => set({ hotZoneTrackings: trackings }),
+  addHotZoneTracking: (tracking) =>
+    set((state) => ({
+      hotZoneTrackings: [...state.hotZoneTrackings, tracking],
+    })),
+  removeHotZoneTracking: (id) =>
+    set((state) => ({
+      hotZoneTrackings: state.hotZoneTrackings.filter(t => t.id !== id),
+    })),
+  setCurrentHotZoneTracking: (tracking) => set({ currentHotZoneTracking: tracking }),
+  setShowHotZones: (show) => set({ showHotZones: show }),
+  setShowHotZonePanel: (show) => set({ showHotZonePanel: show }),
+
   setCurrentExperimentId: (id) => set({ currentExperimentId: id }),
   setHoveredCell: (cell) => set({ hoveredCell: cell }),
   

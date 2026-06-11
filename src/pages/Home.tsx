@@ -4,6 +4,7 @@ import HeatCanvas from '@/components/HeatCanvas';
 import ControlBar from '@/components/ControlBar';
 import Timeline from '@/components/Timeline';
 import ExperimentPanel from '@/components/ExperimentPanel';
+import HotZonePanel from '@/components/HotZonePanel';
 import useSimulationStore from '@/store/useSimulationStore';
 import api from '@/services/api';
 import { Flame } from 'lucide-react';
@@ -14,6 +15,7 @@ export default function Home() {
     setExperiments,
     setFavorites,
     setSnapshots,
+    setHotZoneTrackings,
     currentExperimentId,
   } = useSimulationStore();
 
@@ -47,9 +49,18 @@ export default function Home() {
           console.error('加载快照失败:', error);
         }
       };
+      const loadHotZoneTrackings = async () => {
+        try {
+          const trackings = await api.hotZoneTrackings.getByExperiment(currentExperimentId);
+          setHotZoneTrackings(trackings);
+        } catch (error) {
+          console.error('加载热区追踪失败:', error);
+        }
+      };
       loadSnapshots();
+      loadHotZoneTrackings();
     }
-  }, [currentExperimentId, setSnapshots]);
+  }, [currentExperimentId, setSnapshots, setHotZoneTrackings]);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-950 overflow-hidden">
@@ -71,8 +82,9 @@ export default function Home() {
       <div className="flex-1 flex overflow-hidden">
         <ConfigPanel />
 
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden relative">
           <HeatCanvas />
+          <HotZonePanel />
           <Timeline />
           <ControlBar />
         </div>

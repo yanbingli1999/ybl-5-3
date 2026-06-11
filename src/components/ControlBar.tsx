@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, RotateCcw, SkipForward, Save, Camera } from 'lucide-react';
+import { Play, Pause, RotateCcw, SkipForward, Save, Camera, Target } from 'lucide-react';
 import useSimulationStore from '../store/useSimulationStore';
 import useSimulation from '../hooks/useSimulation';
 import api from '../services/api';
@@ -12,6 +12,12 @@ export const ControlBar: React.FC = () => {
     currentTemperature,
     currentExperimentId,
     addSnapshot,
+    showHotZonePanel,
+    setShowHotZonePanel,
+    hotZoneFrames,
+    currentHotZoneTracking,
+    showHotZones,
+    setShowHotZones,
   } = useSimulationStore();
 
   const { play, pause, reset, stepForward, isRunning, isPaused, isFinished, isIdle } = useSimulation();
@@ -124,6 +130,33 @@ export const ControlBar: React.FC = () => {
           >
             <Save className="w-4 h-4" />
             保存实验
+          </button>
+          <div className="h-8 w-px bg-slate-700" />
+          <button
+            onClick={() => setShowHotZones(!showHotZones)}
+            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all hover:scale-105 text-sm font-medium ${
+              showHotZones
+                ? 'bg-orange-500/90 hover:bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+            }`}
+            title={showHotZones ? '隐藏热区' : '显示热区'}
+          >
+            <Target className="w-4 h-4" />
+            {showHotZones ? '热区开' : '热区关'}
+          </button>
+          <button
+            onClick={() => setShowHotZonePanel(!showHotZonePanel)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all hover:scale-105 text-sm font-medium ${
+              showHotZonePanel
+                ? 'bg-pink-500/90 hover:bg-pink-500 text-white shadow-lg shadow-pink-500/20'
+                : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+            }`}
+          >
+            <Target className="w-4 h-4" />
+            热区追踪
+            {(hotZoneFrames.length > 0 || currentHotZoneTracking) && (
+              <span className="ml-0.5 w-2 h-2 rounded-full bg-white animate-pulse" />
+            )}
           </button>
         </div>
       </div>

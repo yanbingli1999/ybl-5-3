@@ -3,6 +3,7 @@ import type {
   ExperimentConfig,
   TemperatureSnapshot,
   ExperimentResult,
+  HotZoneTracking,
 } from '@shared/types';
 
 interface ApiResponse<T> {
@@ -95,11 +96,28 @@ export const favoritesApi = {
     }),
 };
 
+export const hotZoneTrackingsApi = {
+  getByExperiment: (experimentId: string) =>
+    request<HotZoneTracking[]>(`/hotzone-trackings/${experimentId}`),
+  getDetail: (id: string) =>
+    request<HotZoneTracking>(`/hotzone-trackings/detail/${id}`),
+  create: (tracking: HotZoneTracking) =>
+    request<HotZoneTracking>('/hotzone-trackings', {
+      method: 'POST',
+      body: JSON.stringify(tracking),
+    }),
+  delete: (id: string) =>
+    request<void>(`/hotzone-trackings/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
 export const api = {
   materials: materialsApi,
   experiments: experimentsApi,
   snapshots: snapshotsApi,
   favorites: favoritesApi,
+  hotZoneTrackings: hotZoneTrackingsApi,
 };
 
 export default api;

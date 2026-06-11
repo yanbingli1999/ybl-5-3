@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Clock, Bookmark, Trash2, Play } from 'lucide-react';
 import useSimulationStore from '../store/useSimulationStore';
 import useSimulation from '../hooks/useSimulation';
@@ -13,6 +13,9 @@ export const Timeline: React.FC = () => {
     removeSnapshot,
     minTemp,
     maxTemp,
+    hotZoneFrames,
+    currentHotZoneTracking,
+    showHotZones,
   } = useSimulationStore();
 
   const { goToStep, isRunning } = useSimulation();
@@ -66,12 +69,32 @@ export const Timeline: React.FC = () => {
     label: `${(i * 10)}%`,
   }));
 
+  const hotZoneTrend = useMemo(() => {
+    const frames = currentHotZoneTracking ? currentHotZoneTracking.frames : hotZoneFrames;
+    if (frames.length === 0) return null;
+    const maxCount = Math.max(...frames.map((f) => f.hotZoneCount), 1);
+    const maxArea = Math.max(...frames.map((f) => f.totalArea), 1);
+    return { frames, maxCount, maxArea };
+  }, [hotZoneFrames, currentHotZoneTracking]);
+
   return (
-    <div className="h-28 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 px-6 py-3 space-y-2">
+    <div className="h-32 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 px-6 py-3 space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-slate-300">
           <Clock className="w-4 h-4 text-blue-400" />
           <span className="text-sm font-medium">时间轴</span>
+          {hotZoneTrend && showHotZones && (
+            <div className="flex items-center gap-3 ml-4">
+              <div className="flex items-center gap-1 text-xs">
+                <span className="w-3 h-3 rounded-sm bg-orange-500/60" />
+                <span className="text-slate-400">热区数量</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs">
+                <span className="w-3 h-3 rounded-sm bg-pink-500/40" />
+                <span className="text-slate-400">总面积</span>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Bookmark className="w-4 h-4 text-purple-400" />
@@ -80,9 +103,56 @@ export const Timeline: React.FC = () => {
       </div>
 
       <div
-        className="relative h-8 bg-slate-800 rounded-lg cursor-pointer group"
+        className="relative h-10 bg-slate-800 rounded-lg cursor-pointer group overflow-hidden"
         onClick={handleTimelineClick}
       >
+        {hotZoneTrend && showHotZones && (
+          <svg
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            preserveAspectRatio="none"
+            viewBox="0 0 100 40"
+          >
+            <defs>
+              <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(236, 72, 153, 0.35)" />
+                <stop offset="100%" stopColor="rgba(236, 72, 153, 0.02)" />
+              </linearGradient>
+            </defs>
+            {(() => {
+              const n = hotZoneTrend.frames.length;
+              if (n < 2) return null;
+              let areaPath = '';
+              let countPath = '';
+              for (let i = 0; i < n; i++) {
+                const f = hotZoneTrend.frames[i];
+                const x = (f.step / Math.max(totalSteps - 1, 1)) * 100;
+                const yArea = 38 - (f.totalArea / hotZoneTrend.maxArea) * 34;
+                const yCount = 38 - (f.hotZoneCount / hotZoneTrend.maxCount) * 34;
+                if (i === 0) {
+                  areaPath = `M ${x} 38 L ${x} ${yArea}`;
+                  countPath = `M ${x} ${yCount}`;
+                } else {
+                  areaPath += ` L ${x} ${yArea}`;
+                  countPath += ` L ${x} ${yCount}`;
+                }
+              }
+              areaPath += ' L 100 38 Z';
+              return (
+                <>
+                  <path d={areaPath} fill="url(#areaGrad)" />
+                  <path
+                    d={countPath}
+                    fill="none"
+                    stroke="rgba(249, 115, 22, 0.85)"
+                    strokeWidth="1.2"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </>
+              );
+            })()}
+          </svg>
+        )}
+
         <div
           className="absolute h-full bg-gradient-to-r from-blue-600/30 to-green-600/30 rounded-lg transition-all"
           style={{ width: `${(currentStep / totalSteps) * 100}%` }}
